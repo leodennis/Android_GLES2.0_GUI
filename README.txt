@@ -10,15 +10,15 @@ Check out my sample project, it includes a button, a singele und multiline text 
 See the readme in the Android_Example_Project folder for more instructions.
 
 These are the elements available in the current version:
-	GL_Button
-	GL_Font
+ GL_Button
+ GL_Font
  GL_Text
-	GL_Multiline_Text
+ GL_Multiline_Text
  GL_Texture
-	GL_Sprite
+ GL_Sprite
  GL_ScrollView
-	GL_Line
-	GL_Rectangle
-	GL_Triangle
+ GL_Line
+ GL_Rectangle
+ GL_Triangle
  GL_Circle
 
