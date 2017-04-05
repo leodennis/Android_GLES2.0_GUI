@@ -7,6 +7,7 @@ See the readme in the TextureFontAtlas folder for more instructions.
 
 Android_Example_Project:
 Check out my sample project, it includes a button, a single und multiline text label and a scrollbar.
+All drawing is based on OpenGL ES 2.0.
 See the readme in the Android_Example_Project folder for more instructions.
 
 These are the elements available in the current version:
