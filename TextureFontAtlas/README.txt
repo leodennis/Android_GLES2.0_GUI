@@ -12,4 +12,4 @@ To use a generated font class do the following:
  - Now in the GameManager you can use the font like this: GL_Font font = new FontDroidSans100(context);
  - You defenitly want to set the defualt font like this: GL_Font.setDefaultFont(font); 
  - You might also want to set the smaller default font: GL_Font.setDefaultSmallFont(fontDroidSans64);
- - Now you the font will be used in the GL_Text, GL_Multiline_Text and GL_Buttons
+ - Now you can use the font will be used in the GL_Text, GL_Multiline_Text and GL_Buttons
