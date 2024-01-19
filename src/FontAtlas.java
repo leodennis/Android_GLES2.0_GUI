@@ -79,10 +79,12 @@ public class FontAtlas {
 				g2d.setFont(backupFont);
 				System.err.println(letter.getLetter() + " cannot be drawn by font, using backup font");
 				g2d.drawChars(letter.getLetterAsArray(), 0, 1, letter.getDrawX(), letter.getDrawY() + drawingOffsetBackup);
+
 			} else {
-				g2d.setFont(font);
 				g2d.drawChars(letter.getLetterAsArray(), 0, 1, letter.getDrawX(), letter.getDrawY() + drawingOffset);
 			}
+
+			g2d.setFont(font);
 		}
 	}
 	
