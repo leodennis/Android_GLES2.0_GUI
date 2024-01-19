@@ -17,33 +17,37 @@ public class FontAtlas {
 	private int atlasNumber;
 
 	private Font font;
+	private Font backupFont;
 	private float fontSize;
 	
 	private int drawingOffset;
-	
+	private int drawingOffsetBackup;
+
 	public FontAtlas(List<Letter> chars, int atlasSize, int atlasNumber) {
-		initValues(chars, atlasSize, atlasNumber, null, 1, 0);
+		initValues(chars, atlasSize, atlasNumber, null, null,1, 0, 0);
 	}
 	
-	public FontAtlas(List<Letter> chars, int atlasSize, int atlasNumber, Font font, float fontSize) {
-		initValues(chars, atlasSize, atlasNumber, font, fontSize, 0);
+	public FontAtlas(List<Letter> chars, int atlasSize, int atlasNumber, Font font, Font backupFont, float fontSize) {
+		initValues(chars, atlasSize, atlasNumber, font, backupFont, fontSize, 0, 0);
 	}
 	
-	public FontAtlas(List<Letter> list, int atlasSize, int atlasNumber, Font font, float fontSize, int drawingOffset) {
-		initValues(list, atlasSize, atlasNumber, font, fontSize, drawingOffset);
+	public FontAtlas(List<Letter> list, int atlasSize, int atlasNumber, Font font, Font backupFont, float fontSize, int drawingOffset, int drawingOffsetBackup) {
+		initValues(list, atlasSize, atlasNumber, font, backupFont, fontSize, drawingOffset, drawingOffsetBackup);
 	}
 	
-	public FontAtlas(List<Letter> chars, int atlasSize, int atlasNumber, int drawingOffset) {
-		initValues(chars, atlasSize, atlasNumber, null, 1, drawingOffset);
+	public FontAtlas(List<Letter> chars, int atlasSize, int atlasNumber, int drawingOffset, int drawingOffsetBackup) {
+		initValues(chars, atlasSize, atlasNumber, null, null, 1, drawingOffset, drawingOffsetBackup);
 	}
 	
-	private void initValues(List<Letter> chars, int atlasSize, int atlasNumber, Font font, float fontSize, int drawingOffset) {
+	private void initValues(List<Letter> chars, int atlasSize, int atlasNumber, Font font, Font backupFont, float fontSize, int drawingOffset, int drawingOffsetBackup) {
 		this.characters = chars;
 		this.atlasSize = atlasSize;
 		this.atlasNumber = atlasNumber;
 		this.font = font;
+		this.backupFont = backupFont;
 		this.fontSize = fontSize;
 		this.drawingOffset = drawingOffset;
+		this.drawingOffsetBackup = drawingOffsetBackup;
 	}
 	
 	public void setFontInfo(Font font, int fontSize) {
@@ -55,11 +59,11 @@ public class FontAtlas {
 		this.drawingOffset = drawingOffset;
 	}
 	
-	public void draw(Graphics2D g2d, boolean highliteBounds) {
+	public void draw(Graphics2D g2d, boolean highlightBounds) {
 		for (int i = 0; i < characters.size(); i++) {
 			Letter letter = characters.get(i);
 			
-			if (highliteBounds) {
+			if (highlightBounds) {
 				g2d.setPaint(Color.GREEN);
 				g2d.drawRect(letter.getRealX(), letter.getRealY(), letter.getWidth(), letter.getHight());
 				
@@ -68,9 +72,17 @@ public class FontAtlas {
 				g2d.drawRect(letter.getRealX() - letter.getxDiff(), letter.getRealY(), letter.getWidth()+letter.getSpaceR()+letter.getxDiff(), letter.getHight());
 				*/
 			}
-			
+
 			g2d.setPaint(Color.black);
-			g2d.drawChars(letter.getLetterAsArray(), 0, 1, letter.getDrawX(), letter.getDrawY() + drawingOffset);
+
+			if (!font.canDisplay(letter.getLetter()) && backupFont != null) {
+				g2d.setFont(backupFont);
+				System.err.println(letter.getLetter() + " cannot be drawn by font, using backup font");
+				g2d.drawChars(letter.getLetterAsArray(), 0, 1, letter.getDrawX(), letter.getDrawY() + drawingOffsetBackup);
+			} else {
+				g2d.setFont(font);
+				g2d.drawChars(letter.getLetterAsArray(), 0, 1, letter.getDrawX(), letter.getDrawY() + drawingOffset);
+			}
 		}
 	}
 	
@@ -81,6 +93,9 @@ public class FontAtlas {
 		
 		Graphics2D g2d = fontAtlas.createGraphics();
 		font = font.deriveFont(fontSize);
+		if (backupFont != null) {
+			backupFont = backupFont.deriveFont(fontSize);
+		}
 	    g2d.setFont(font);
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON); //make text smooth
 		

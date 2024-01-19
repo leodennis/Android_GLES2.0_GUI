@@ -67,6 +67,7 @@ public class AtlasView extends JFrame implements ActionListener, ProgressMonitor
 	private final String[] cobResolutionStrings = { "32x32", "64x64", "128x128", "256x256", "512x512", "1024x1024", "2048x2048" , "4096x4096",  "Auto"};
 	private JComboBox<String> cobResolution = new JComboBox<String>(cobResolutionStrings);
 	private JComboBox<String> cobFonts;
+	private JComboBox<String> cobBackupFonts;
 	private JTextField txtSize = new JTextField();
 	private JButton butRun = new JButton("Run");
 	private JButton butSave = new JButton("Save");
@@ -81,6 +82,7 @@ public class AtlasView extends JFrame implements ActionListener, ProgressMonitor
 	private JLabel lblResolution = new JLabel(" Max resolution: ");
 	private JLabel lblAtlasCount = new JLabel(" Number of pictures to use: ");
 	private JLabel lblFont = new JLabel(" Font: ");
+	private JLabel lblBackupFont = new JLabel(" Backup Font: ");
 	private JLabel lblFontSize = new JLabel(" Font - size: ");
 	
 	private JLabel lblDistance0 = new JLabel(" ");
@@ -185,6 +187,7 @@ public class AtlasView extends JFrame implements ActionListener, ProgressMonitor
 	    }
 	    
 	    cobFonts = new JComboBox<String>(fontNames);
+	    cobBackupFonts = new JComboBox<String>(fontNames);
 	    cobResolution.setSelectedIndex(4); //set default to 512x512
 	    
 	    butSave.setToolTipText(butSaveToolTipDisabled);
@@ -294,13 +297,15 @@ public class AtlasView extends JFrame implements ActionListener, ProgressMonitor
 		setPositions(lblDistance2, 0, 12, 0, 1);
 		setPositions(lblFont, 0, 13);
 		setPositions(cobFonts, 1, 13, 3, 1, 0, 0);
-		setPositions(lblDistance3, 0, 14, 0, 1);
-		setPositions(lblFontSize, 0, 15);
-		setPositions(txtSize, 1, 15, 2, 1, 0, 0);
-		setPositions(lblDistance4, 0, 16, 0, 1);
-		setPositions(butRun, 1, 17, 3, 1, 1, 1);
-		setPositions(lblDistance5, 0, 18, 0, 1);
-		setPositions(butSave, 1, 19, 3, 1, 1, 1);
+		setPositions(lblBackupFont, 0, 14);
+		setPositions(cobBackupFonts, 1, 14, 3, 1, 0, 0);
+		setPositions(lblDistance3, 0, 15, 0, 1);
+		setPositions(lblFontSize, 0, 16);
+		setPositions(txtSize, 1, 16, 2, 1, 0, 0);
+		setPositions(lblDistance4, 0, 17, 0, 1);
+		setPositions(butRun, 1, 18, 3, 1, 1, 1);
+		setPositions(lblDistance5, 0, 19, 0, 1);
+		setPositions(butSave, 1, 20, 3, 1, 1, 1);
 	}
 	
 	private void initRadioButtons() {		 
@@ -858,10 +863,12 @@ public class AtlasView extends JFrame implements ActionListener, ProgressMonitor
 		}
 		
 		Font font = getFontByName((String) cobFonts.getSelectedItem());
-		if(font == null) {
+		if (font == null) {
 			JOptionPane.showMessageDialog(null, "Font not found", "Error", JOptionPane.ERROR_MESSAGE); 
 			return false;
 		}
+
+		Font backupFont = getFontByName((String) cobBackupFonts.getSelectedItem());
 		
 		float fontSize;
 		try {
@@ -875,15 +882,15 @@ public class AtlasView extends JFrame implements ActionListener, ProgressMonitor
 		
 		//Start calculation based on selected mode
 		if(rbSingle.isSelected()) {
-			fullAtlasTmp = new FullFontAtlas(chars, atlasDim, font, fontSize, FullFontAtlas.Modes.MODE_SINGLE, auto, this);
+			fullAtlasTmp = new FullFontAtlas(chars, atlasDim, font, backupFont, fontSize, FullFontAtlas.Modes.MODE_SINGLE, auto, this);
 		} else if(rbMultiple.isSelected()) {
-			fullAtlasTmp = new FullFontAtlas(chars, atlasDim, font, fontSize, FullFontAtlas.Modes.MODE_MULTIPLE, auto, this);
+			fullAtlasTmp = new FullFontAtlas(chars, atlasDim, font, backupFont, fontSize, FullFontAtlas.Modes.MODE_MULTIPLE, auto, this);
 		} else if(rbMultipleAuto.isSelected()) {
-			fullAtlasTmp = new FullFontAtlas(chars, atlasDim, font, fontSize, FullFontAtlas.Modes.MODE_MULTIPLE_AUTO, auto, this);
+			fullAtlasTmp = new FullFontAtlas(chars, atlasDim, font, backupFont, fontSize, FullFontAtlas.Modes.MODE_MULTIPLE_AUTO, auto, this);
 		} else if(rbCustom.isSelected()) {
-			fullAtlasTmp = new FullFontAtlas(chars, atlasDim, font, fontSize, FullFontAtlas.Modes.MODE_CUSTOM, auto, this);
+			fullAtlasTmp = new FullFontAtlas(chars, atlasDim, font, backupFont, fontSize, FullFontAtlas.Modes.MODE_CUSTOM, auto, this);
 		} else {
-			fullAtlasTmp = new FullFontAtlas(chars, atlasDim, font, fontSize, FullFontAtlas.Modes.MODE_AUTO, auto, this);
+			fullAtlasTmp = new FullFontAtlas(chars, atlasDim, font, backupFont, fontSize, FullFontAtlas.Modes.MODE_AUTO, auto, this);
 		}
 		return true;
 	}

@@ -43,13 +43,13 @@ public class FullFontAtlas {
 		MODE_CUSTOM;
 	}
 	
-	public FullFontAtlas(String chars, int atlasDim, Font font, float fontSize, Modes mode, boolean auto, JFrame context) {
+	public FullFontAtlas(String chars, int atlasDim, Font font, Font backupFont, float fontSize, Modes mode, boolean auto, JFrame context) {
 		this.chars = chars;
 		this.context = context;
 		this.progressMonitor = (ProgressMonitorView) context;
 		
 		
-		new GenerateAtlas(atlasDim, font, fontSize, mode, auto).execute();
+		new GenerateAtlas(atlasDim, font, backupFont, fontSize, mode, auto).execute();
 	}
 	
 	public FullFontAtlas(String myFontName, ArrayList<FontAtlas> fontAtlasList, int maxTextHeight, int maxDescent, int normalCapHeight, int wsWidth, int spacing) {
@@ -135,7 +135,7 @@ public class FullFontAtlas {
 		
 	}
 	
-	private ArrayList<FontAtlas> autoAlgorithm(ArrayList<FontAtlas> originalAtlasList, ArrayList<Letter> originalLetterList, int rep, int dim, int maxDim, int n, Font font, int fontSize, int maxHmD) {
+	private ArrayList<FontAtlas> autoAlgorithm(ArrayList<FontAtlas> originalAtlasList, ArrayList<Letter> originalLetterList, int rep, int dim, int maxDim, int n, Font font, Font backupFont, int fontSize, int maxHmD, int maxHmDBackup) {
 		if(dim > maxDim) {
 			for (Letter letter : originalLetterList) {
 				if (letter.isPlaced())
@@ -152,18 +152,17 @@ public class FullFontAtlas {
 		ArrayList<Letter> nLetterListCp = new ArrayList<Letter>(originalLetterList);
 		ArrayList<Letter> sLetterListCp = new ArrayList<Letter>(originalLetterList);
 		
-		oAtlasListCp = autoAlgorithm(oAtlasListCp, oLetterListCp, 0, dim*2, maxDim, n, font, fontSize, maxHmD);
+		oAtlasListCp = autoAlgorithm(oAtlasListCp, oLetterListCp, 0, dim*2, maxDim, n, font, backupFont, fontSize, maxHmD, maxHmDBackup);
 		
 		ArrayList<Letter> subList = repositionLetters(nLetterListCp, dim);
-		FontAtlas fontAtlas = new FontAtlas(subList, dim, 
-					++n, font, fontSize, maxHmD);
+		FontAtlas fontAtlas = new FontAtlas(subList, dim, ++n, font, backupFont, fontSize, maxHmD, maxHmDBackup);
 			
 		nAtlasListCp.add(fontAtlas);
 		
-		nAtlasListCp = autoAlgorithm(nAtlasListCp, nLetterListCp, 0, dim*2, maxDim, n, font, fontSize, maxHmD);
+		nAtlasListCp = autoAlgorithm(nAtlasListCp, nLetterListCp, 0, dim*2, maxDim, n, font, backupFont, fontSize, maxHmD, maxHmDBackup);
 		
 		if(rep < 5) {
-			sAtlasListCp = autoAlgorithm(sAtlasListCp, sLetterListCp, ++rep, dim, maxDim, n, font, fontSize, maxHmD);
+			sAtlasListCp = autoAlgorithm(sAtlasListCp, sLetterListCp, ++rep, dim, maxDim, n, font, backupFont, fontSize, maxHmD, maxHmDBackup);
 		} else {
 			sAtlasListCp = null;
 		}
@@ -260,8 +259,7 @@ public class FullFontAtlas {
 		return tmpLetterList;
 	}
 	
-	 private Rectangle getStringBounds(Graphics2D g2, String str,
-             float x, float y) {
+	 private Rectangle getStringBounds(Graphics2D g2, String str, float x, float y) {
 		FontRenderContext frc = g2.getFontRenderContext();
 		GlyphVector gv = g2.getFont().createGlyphVector(frc, str);
 		return gv.getPixelBounds(null, x, y);
@@ -335,7 +333,6 @@ public class FullFontAtlas {
 			out.print(sb.toString());
 			out.close();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
 	 }
@@ -347,14 +344,16 @@ public class FullFontAtlas {
 		 
 		 private  int atlasDim;
 		 private Font font;
+		 private Font backupFont;
 		 private float fontSize;
 		 private Modes mode;
 		 private boolean auto;
 		 
-		 GenerateAtlas(int atlasDim, Font font, float fontSize, Modes mode, boolean auto) {
+		 GenerateAtlas(int atlasDim, Font font, Font backupFont, float fontSize, Modes mode, boolean auto) {
 			 this.atlasDim = atlasDim;
 			 this.font = font;
 			 this.fontSize = fontSize;
+			 this.backupFont = backupFont;
 			 this.mode = mode;
 			 this.auto = auto;
 		 }
@@ -370,36 +369,53 @@ public class FullFontAtlas {
 
 		      Graphics2D ig2 = atlas.createGraphics();
 		      ig2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON); //make text smooth
-		      
+
 		      font = font.deriveFont(fontSize);
-		      ig2.setFont(font);
-		      
-		      int whitespaceWidth = ig2.getFontMetrics().charWidth(' ');   
-		      
-		      
-		      int originalY = 0;
-		      Rectangle maxBounds = getStringBounds(ig2, chars, 0, originalY);
+			  if (backupFont != null) {
+				  backupFont = backupFont.deriveFont(fontSize);
+			  }
+			  ig2.setFont(font);
+
+		      int whitespaceWidth = ig2.getFontMetrics().charWidth(' ');
+
+		      Rectangle maxBounds = getStringBounds(ig2, chars, 0, 0);
 		      int maxHeight = maxBounds.height;
-		      int maxDescent = maxHeight - (originalY-maxBounds.y);
-		      
-		      
+		      int maxDescent = maxHeight - (maxBounds.y);
+
+			  int maxHeightBackup = 0;
+			  int maxDescentBackup = 0;
+
+			  if (backupFont != null) {
+				  ig2.setFont(backupFont);
+				  Rectangle maxBoundsBackup = getStringBounds(ig2, chars, 0, 0);
+				  maxHeightBackup = maxBoundsBackup.height;
+				  maxDescentBackup = maxHeightBackup - (maxBoundsBackup.y);
+				  ig2.setFont(font);
+			  }
+
 		      Rectangle bI = getStringBounds(ig2, "I", 0, 0);
 		      int normalCapHeight = (int) bI.getHeight();		//FontMetric.getAscent() doesn't work for all fonts so the correct value is about the size of I, T or P
-		      
-		      
+
 		      Rectangle b = getStringBounds(ig2, "AA", 0, 0);
 		      Rectangle b1 = getStringBounds(ig2, "A", 0, 0);
 		      int spacing = (int) (b.getWidth()-b1.getWidth()*2);
-		      
+
 		      System.out.println("Spacing: " + spacing + ", WhiteSpaceW:" + whitespaceWidth);
 		      
-		      ArrayList<Letter> letterList = new ArrayList<Letter>();
+		      ArrayList<Letter> letterList = new ArrayList<>();
 		      
-		      for(int i=0; i<chars.length(); i++) {
+		      for (int i = 0; i < chars.length(); i++) {
 		    	  char c  = chars.charAt(i);
 		    	  Letter letter = new Letter(c); //letter is not placed
+
+				  ig2.setFont(getFont(c));
 			      
-			      Rectangle bounds = getStringBounds(ig2, new String(letter.getLetterAsArray()), 0, maxHeight - maxDescent); 
+			      Rectangle bounds;
+				  if (ig2.getFont() == backupFont) {
+					  bounds = getStringBounds(ig2, new String(letter.getLetterAsArray()), 0, maxHeightBackup - maxDescentBackup);
+				  } else {
+					  bounds = getStringBounds(ig2, new String(letter.getLetterAsArray()), 0, maxHeight - maxDescent);
+				  }
 
 			      letter.setDiff(bounds.x, bounds.y);
 			      letter.setDimensions(bounds.width, bounds.height);  
@@ -427,7 +443,7 @@ public class FullFontAtlas {
 						
 					}
 					
-					FontAtlas fontAtlas = new FontAtlas(letterList, atlasDim, 1, font, fontSize, maxHeight-maxDescent);
+					FontAtlas fontAtlas = new FontAtlas(letterList, atlasDim, 1, font, backupFont, fontSize, maxHeight-maxDescent, maxHeightBackup-maxDescentBackup);
 					
 		      		fontAtlasList.add(fontAtlas);
 					
@@ -437,7 +453,7 @@ public class FullFontAtlas {
 		      		int countM = 1;
 		      		do {
 		      			ArrayList<Letter> tmpLetterListM = repositionLetters(letterList, atlasDim);
-		      			FontAtlas fontAtlasM = new FontAtlas(tmpLetterListM, atlasDim, countM, font, fontSize, maxHeight-maxDescent);
+		      			FontAtlas fontAtlasM = new FontAtlas(tmpLetterListM, atlasDim, countM, font, backupFont, fontSize, maxHeight-maxDescent, maxHeightBackup-maxDescentBackup);
 			      		fontAtlasList.add(fontAtlasM);
 			      		
 			      		progressMonitor.updateProgress((int) (Letter.getPlacedCount(letterList)/((float)(letterList.size()))*100));
@@ -459,7 +475,7 @@ public class FullFontAtlas {
 				      			break;
 			      			
 			      			ArrayList<Letter> tmpLetterListM = repositionLetters(letterList, atlasDim);
-			      			FontAtlas fontAtlasM = new FontAtlas(tmpLetterListM, atlasDim, count, font, fontSize, maxHeight-maxDescent);
+			      			FontAtlas fontAtlasM = new FontAtlas(tmpLetterListM, atlasDim, count, font, backupFont, fontSize, maxHeight-maxDescent, maxHeightBackup-maxDescentBackup);
 			      			tmpFontAtlasListMA.add(fontAtlasM);
 			      			placed += tmpLetterListM.size();
 				      		
@@ -486,8 +502,7 @@ public class FullFontAtlas {
 		      		for (Integer customAtlasDim : AtlasView.customResolutionValues) {
 		      			countC++;
 		      			ArrayList<Letter> subList = repositionLetters(letterList, customAtlasDim);
-		      			FontAtlas fontAtlasC = new FontAtlas(subList, customAtlasDim, 
-		      					countC, font, fontSize, maxHeight-maxDescent);
+		      			FontAtlas fontAtlasC = new FontAtlas(subList, customAtlasDim, countC, font, backupFont, fontSize, maxHeight-maxDescent, maxHeightBackup-maxDescentBackup);
 		      			fontAtlasList.add(fontAtlasC);
 		      			progressMonitor.updateProgress((int) (countC/((float)(AtlasView.customResolutionValues.length))*100));
 		      			if (Letter.areAllPlaced(letterList)) {
@@ -541,8 +556,7 @@ public class FullFontAtlas {
 			      						continue;
 			      					}
 			      					//keep changes
-			      					FontAtlas fontAtlasA = new FontAtlas(subList, dim, 
-			      							0, font, fontSize, maxHeight-maxDescent);
+			      					FontAtlas fontAtlasA = new FontAtlas(subList, dim, 0, font, backupFont, fontSize, maxHeight-maxDescent, maxHeightBackup-maxDescentBackup);
 			    	      			fontAtlasList.add(fontAtlasA);
 			    	      			//working = tmpTopMax+1;  ?
 			    	      			//working = i;
@@ -645,6 +659,13 @@ public class FullFontAtlas {
 			
 			return null;
 		}
+
+		 private Font getFont(char c) {
+			 if (!font.canDisplay(c) && backupFont != null) {
+				 return backupFont;
+			 }
+			 return font;
+		 }
 		 
 	 }
 	 
